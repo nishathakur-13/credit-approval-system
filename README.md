@@ -2,7 +2,7 @@
 
 This is a Django REST Framework project that provides an API for a credit approval system. It allows for registering customers, checking loan eligibility, and creating loans based on historical data.
 
-## Setup and Installation on you device
+## Setup and Installation on you devices
 
 1. Clone the repository on you device.
 2. Create a virtual environment: `python -m venv venv`
