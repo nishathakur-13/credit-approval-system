@@ -4,7 +4,7 @@ This is a Django REST Framework project that provides an API for a credit approv
 
 ## Setup and Installation on you device
 
-1. Clone the repository.
+1. Clone the repository on you device.
 2. Create a virtual environment: `python -m venv venv`
 3. Activate it: `venv\Scripts\activate`
 4. Install requirements: `pip install -r requirements.txt`
