@@ -1,6 +1,7 @@
 import pandas as pd
 from django.core.management.base import BaseCommand
 from core.models import Customer, Loan
+from django.contrib.auth.models import User  # Moved to top to fix NameError
 
 class Command(BaseCommand):
     help = 'Deletes all existing data and imports new data from Excel files'
@@ -60,8 +61,11 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'Error importing loan data: {e}'))
             return
 
+        # --- Final Success and Superuser Creation ---
         self.stdout.write(self.style.SUCCESS('All data imported successfully!'))
-        from django.contrib.auth.models import User
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'Nisha@123')
-    print("Superuser 'admin' created successfully!")
+        
+        if not User.objects.filter(username='admin').exists():
+            User.objects.create_superuser('admin', 'admin@example.com', 'Nisha@123')
+            self.stdout.write(self.style.SUCCESS("Superuser 'admin' created successfully!"))
+        else:
+            self.stdout.write("Superuser 'admin' already exists.")
