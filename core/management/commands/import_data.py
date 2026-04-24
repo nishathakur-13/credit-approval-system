@@ -61,3 +61,7 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(self.style.SUCCESS('All data imported successfully!'))
+        from django.contrib.auth.models import User
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('admin', 'admin@example.com', 'Nisha@123')
+    print("Superuser 'admin' created successfully!")
