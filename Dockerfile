@@ -24,4 +24,4 @@ COPY . /app/
 
 # The command to run the application using Gunicorn
 # This binds the app to port 10000, which is what Render expects
-CMD ["gunicorn", "credit_approval.wsgi:application", "--bind", "0.0.0.0:10000"]
+CMD python manage.py migrate && python manage.py import_data && gunicorn credit_approval.wsgi:application --bind 0.0.0.0:10000
