@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -43,23 +45,48 @@ def calculate_credit_score(customer_id):
 
     return min(score, 100)
 
+# ----------------- UNIFIED LOGIN & GATEWAY -----------------
+
+def unified_login(request):
+    """A professional gateway for both Admins and Customers."""
+    if request.method == "POST":
+        u_name = request.POST.get('username')
+        p_word = request.POST.get('password')
+        user = authenticate(request, username=u_name, password=p_word)
+        
+        if user is not None:
+            login(request, user)
+            # Role-Based Routing
+            if user.is_staff:
+                return redirect('/admin/')
+            else:
+                return redirect('/register-ui/')
+        else:
+            messages.error(request, "Invalid credentials. Please check your ID and password.")
+            
+    return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login-gateway')
+
 # ----------------- UI / FRONTEND VIEW -----------------
 
 def register_customer_page(request):
     """Handles the Frontend UI for Customer Registration."""
+    if not request.user.is_authenticated:
+        return redirect('login-gateway')
+
     if request.method == "POST":
         try:
-            # Collect data from HTML Form
             first_name = request.POST.get('first_name')
             last_name = request.POST.get('last_name')
             age = int(request.POST.get('age'))
             monthly_income = int(request.POST.get('monthly_income'))
             phone_number = request.POST.get('phone_number')
 
-            # Logic: approved_limit = 36 * monthly_salary rounded to nearest Lakh
             approved_limit = round(36 * monthly_income, -5)
 
-            # Save to database
             new_customer = Customer.objects.create(
                 first_name=first_name,
                 last_name=last_name,
@@ -69,13 +96,13 @@ def register_customer_page(request):
                 phone_number=phone_number
             )
 
-            return JsonResponse({
-                "status": "Success", 
-                "customer_id": new_customer.id,
-                "message": f"Welcome {first_name}! Your credit limit is ₹{approved_limit:,}"
+            return render(request, 'register.html', {
+                "success": True,
+                "limit": f"{approved_limit:,}",
+                "name": first_name
             })
         except Exception as e:
-            return JsonResponse({"status": "Error", "message": str(e)}, status=400)
+            return render(request, 'register.html', {"error": str(e)})
 
     return render(request, 'register.html')
 

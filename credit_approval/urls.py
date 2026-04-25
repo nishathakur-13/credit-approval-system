@@ -1,27 +1,22 @@
-from django.urls import path
-from .views import (
-    RegisterCustomerView, 
-    CheckEligibilityView, 
-    CreateLoanView, 
-    ViewLoanDetailView, 
-    ViewCustomerLoansView,
-    CustomerListView # This is the one we'll use for viewing a customer
-)
+from django.contrib import admin
+from django.urls import path, include
+from core.views import unified_login, logout_view  # Boss needs to know how to log people in
 
 urlpatterns = [
-    # Assignment Endpoints
-    path('register/', RegisterCustomerView.as_view(), name='register-customer'),
-    path('check-eligibility/', CheckEligibilityView.as_view(), name='check-eligibility'),
-    path('create-loan/', CreateLoanView.as_view(), name='create-loan'),
+    # 1. The Landing Page (The Main Entrance)
+    path('', unified_login, name='login-gateway'),
+
+    # 2. Logout functionality
+    path('logout/', logout_view, name='logout'),
+
+    # 3. The Admin "Control Center"
+    path('admin/', admin.site.urls),
     
-    # --- The Fix for your 404 ---
-    # This maps 'view-customer/1/' to your Customer list logic
-    path('view-customer/<int:id>/', CustomerListView.as_view(), name='view-customer'), 
+    # 4. Routing for the Customer UI
+    # This sends any request starting with 'register-ui/' to core/urls.py
+    path('register-ui/', include('core.urls')),
     
-    path('view-loan/<int:id>/', ViewLoanDetailView.as_view(), name='view-loan-detail'),
-    path('view-loans/<int:customer_id>/', ViewCustomerLoansView.as_view(), name='view-customer-loans'),
-    
-    # Utility list views
-    path('customers/', CustomerListView.as_view(), name='customer-list'),
-    path('loans/', LoanListView.as_view(), name='loan-list'),
+    # 5. Routing for the Backend APIs
+    # This sends any request starting with 'api/' to core/urls.py
+    path('api/', include('core.urls')),
 ]
