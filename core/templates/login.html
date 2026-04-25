@@ -3,72 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway | Credit Approval System</title>
+    <title>Credit Approval System | Portal</title>
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; 
             background: linear-gradient(135deg, #1a2a6c, #243b55); 
-            height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            margin: 0; 
+            height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; 
         }
         .login-card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 15px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
-            width: 100%; 
-            max-width: 350px; 
-            text-align: center; 
+            background: white; padding: 40px; border-radius: 15px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; 
         }
-        .logo { 
-            font-size: 22px; 
-            font-weight: bold; 
-            color: #1a2a6c; 
-            margin-bottom: 10px; 
-            letter-spacing: 1px;
-        }
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 10px 0; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            box-sizing: border-box;
-        }
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            background: #1a2a6c; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-        button:hover { background: #0f1a4a; }
-        .error-msg {
-            color: #b21f1f;
-            font-size: 13px;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
+        h1 { font-size: 26px; color: #1a2a6c; margin-bottom: 5px; text-transform: uppercase; font-weight: 800; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background-color: #f9f9f9; }
+        
+        .btn-container { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; border: none; transition: 0.3s; }
+        .btn-login { background: #1a2a6c; color: white; }
+        .btn-signup { background: #f4f7f6; color: #1a2a6c; border: 1px solid #1a2a6c; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .links-container { margin-top: 25px; font-size: 13px; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 15px; }
+        .links-container a { color: #b21f1f; text-decoration: none; font-weight: 500; }
+        .error-msg { color: #b21f1f; font-size: 13px; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <div class="logo">CREDIT SYSTEM</div>
-        <div class="subtitle">Unified Access Portal</div>
+        <h1>Credit Approval System</h1>
+        <div class="subtitle">Unified Secure Access Portal</div>
         
         {% if messages %}
             {% for message in messages %}
@@ -80,8 +44,17 @@
             {% csrf_token %}
             <input type="text" name="username" placeholder="Username / Admin ID" required>
             <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">LOGIN</button>
+            
+            <div class="btn-container">
+                <button type="submit" class="btn btn-login">LOGIN</button>
+                <a href="/signup/" class="btn btn-signup">SIGN UP</a>
+            </div>
         </form>
+
+        <div class="links-container">
+            <a href="#">Forgot Username?</a>
+            <a href="#">Forgot Password?</a>
+        </div>
     </div>
 </body>
 </html>
