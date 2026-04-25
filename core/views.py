@@ -1,3 +1,5 @@
+from django.shortcuts import render
+from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,13 +15,9 @@ def calculate_emi(principal, annual_rate, tenure):
     if annual_rate == 0:
         return round(principal / tenure, 2)
     
-    # Convert annual rate to monthly decimal
     r = (annual_rate / 12) / 100
-    
-    # EMI Formula: [P * r * (1+r)^n] / [(1+r)^n - 1]
     numerator = principal * r * math.pow(1 + r, tenure)
     denominator = math.pow(1 + r, tenure) - 1
-    
     emi = numerator / denominator
     return round(emi, 2)
 
@@ -31,23 +29,55 @@ def calculate_credit_score(customer_id):
         return 0
 
     past_loans = Loan.objects.filter(customer=customer)
-    
     emis_paid_on_time_count = sum(loan.emis_paid_on_time for loan in past_loans)
     num_loans_taken = past_loans.count()
     current_debt = sum(loan.loan_amount for loan in past_loans if loan.end_date > date.today())
     
     score = 50
-    # Logic: Debt exceeds limit
     if current_debt > customer.approved_limit:
         score = 0
-    # Logic: Experience with multiple loans
     if num_loans_taken > 5:
         score += 10
-    # Logic: Repayment reliability
     if emis_paid_on_time_count > 50:
         score += 15
 
     return min(score, 100)
+
+# ----------------- UI / FRONTEND VIEW -----------------
+
+def register_customer_page(request):
+    """Handles the Frontend UI for Customer Registration."""
+    if request.method == "POST":
+        try:
+            # Collect data from HTML Form
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            age = int(request.POST.get('age'))
+            monthly_income = int(request.POST.get('monthly_income'))
+            phone_number = request.POST.get('phone_number')
+
+            # Logic: approved_limit = 36 * monthly_salary rounded to nearest Lakh
+            approved_limit = round(36 * monthly_income, -5)
+
+            # Save to database
+            new_customer = Customer.objects.create(
+                first_name=first_name,
+                last_name=last_name,
+                age=age,
+                monthly_salary=monthly_income,
+                approved_limit=approved_limit,
+                phone_number=phone_number
+            )
+
+            return JsonResponse({
+                "status": "Success", 
+                "customer_id": new_customer.id,
+                "message": f"Welcome {first_name}! Your credit limit is ₹{approved_limit:,}"
+            })
+        except Exception as e:
+            return JsonResponse({"status": "Error", "message": str(e)}, status=400)
+
+    return render(request, 'register.html')
 
 # ----------------- API VIEWS -----------------
 
@@ -64,7 +94,6 @@ class RegisterCustomerView(APIView):
         data = request.data
         try:
             monthly_salary = data.get('monthly_salary')
-            # Rounding to the nearest Lakh
             approved_limit = round(36 * monthly_salary, -5)
 
             customer = Customer.objects.create(
@@ -92,14 +121,12 @@ class CheckEligibilityView(APIView):
             customer = Customer.objects.get(id=customer_id)
             credit_score = calculate_credit_score(customer_id)
             
-            # Sum of EMIs for all ongoing loans
             current_loans = Loan.objects.filter(customer=customer, end_date__gt=date.today())
             sum_of_current_emis = sum(loan.monthly_repayment for loan in current_loans)
 
             approval = False
             corrected_interest_rate = interest_rate
 
-            # Tiered Interest Rate Logic
             if credit_score > 50:
                 approval = True
             elif 50 >= credit_score > 30:
@@ -111,10 +138,8 @@ class CheckEligibilityView(APIView):
             else:
                 approval = False
 
-            # Calculate EMI using the helper function
             new_emi = calculate_emi(loan_amount, corrected_interest_rate, tenure)
 
-            # Check if total EMIs exceed 50% of monthly salary
             if (sum_of_current_emis + new_emi) > (0.5 * customer.monthly_salary):
                 approval = False
 
@@ -142,7 +167,6 @@ class CreateLoanView(APIView):
             interest_rate = float(data.get('interest_rate'))
             tenure = int(data.get('tenure'))
 
-            # Re-use the eligibility logic for safety
             eligibility_response = CheckEligibilityView().post(request)
             eligibility_data = eligibility_response.data
 
