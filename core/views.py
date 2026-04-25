@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib import messages
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -45,10 +46,10 @@ def calculate_credit_score(customer_id):
 
     return min(score, 100)
 
-# ----------------- UNIFIED LOGIN & GATEWAY -----------------
+# ----------------- AUTHENTICATION VIEWS -----------------
 
 def unified_login(request):
-    """A professional gateway for both Admins and Customers."""
+    """Handles the Sign In portal with role-based routing."""
     if request.method == "POST":
         u_name = request.POST.get('username')
         p_word = request.POST.get('password')
@@ -56,15 +57,32 @@ def unified_login(request):
         
         if user is not None:
             login(request, user)
-            # Role-Based Routing
             if user.is_staff:
                 return redirect('/admin/')
             else:
                 return redirect('/register-ui/')
         else:
-            messages.error(request, "Invalid credentials. Please check your ID and password.")
+            messages.error(request, "Invalid username or password.")
             
     return render(request, 'login.html')
+
+def signup_view(request):
+    """Handles new Customer account creation."""
+    if request.method == "POST":
+        u_name = request.POST.get('username')
+        email = request.POST.get('email')
+        p_word = request.POST.get('password')
+        
+        if User.objects.filter(username=u_name).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, 'signup.html')
+        
+        # Create standard user (not staff)
+        User.objects.create_user(username=u_name, email=email, password=p_word)
+        messages.success(request, "Account created successfully! Please sign in.")
+        return redirect('login-gateway')
+        
+    return render(request, 'signup.html')
 
 def logout_view(request):
     logout(request)
