@@ -2,70 +2,85 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from datetime import date, timedelta
+import math
+
 from .models import Customer, Loan
+from .serializers import CustomerSerializer, LoanSerializer
+
+# ----------------- HELPER LOGIC -----------------
+
+def calculate_emi(principal, annual_rate, tenure_months):
+    """Calculates EMI using reducing balance compound interest."""
+    if annual_rate == 0:
+        return principal / tenure_months
+    monthly_rate = (annual_rate / 12) / 100
+    emi = (principal * monthly_rate * math.pow(1 + monthly_rate, tenure_months)) / \
+          (math.pow(1 + monthly_rate, tenure_months) - 1)
+    return round(emi, 2)
+
+def calculate_credit_score(customer_id):
+    """
+    Placeholder for credit score logic. 
+    In a real app, this would evaluate historical loan performance.
+    """
+    try:
+        customer = Customer.objects.get(id=customer_id)
+        loans = Loan.objects.filter(customer=customer)
+        
+        # Simple logic: 50 base + 5 for every loan paid on time
+        score = 50
+        for loan in loans:
+            if loan.emis_paid_on_time > 0:
+                score += 5
+        return min(score, 100)
+    except:
+        return 0
+
+# ----------------- AUTH & DASHBOARD VIEWS -----------------
 
 def unified_login(request):
     if request.method == 'POST':
-        # Logic to handle both Admin and Customer login
         u, p = request.POST.get('username'), request.POST.get('password')
         user = authenticate(username=u, password=p)
         if user:
             login(request, user)
+            # Staff goes to Django Admin, regular users go to Customer UI
             return redirect('admin:index') if user.is_staff else redirect('dashboard')
         messages.error(request, "Invalid credentials")
     return render(request, 'login.html')
 
 def signup_view(request):
     if request.method == 'POST':
-        # Automatically calculates approved limit: 36 * salary
-        salary = float(request.POST.get('salary', 0))
-        limit = round(36 * salary, -5) # Nearest Lakh
-        
-        # Create User and associated Customer profile
-        user = UserCreationForm(request.POST).save()
-        Customer.objects.create(
-            user=user,
-            first_name=request.POST.get('first_name'),
-            monthly_salary=salary,
-            approved_limit=limit
-        )
-        login(request, user)
-        return redirect('dashboard')
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            salary = float(request.POST.get('salary', 0))
+            limit = round(36 * salary, -5)
+            
+            user = form.save()
+            Customer.objects.create(
+                user=user, # Ensure your Customer model has a OneToOneField to User
+                first_name=request.POST.get('first_name'),
+                last_name=request.POST.get('last_name'),
+                age=int(request.POST.get('age', 0)),
+                monthly_salary=salary,
+                approved_limit=limit,
+                phone_number=request.POST.get('phone_number')
+            )
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Registration failed. Check details.")
     return render(request, 'signup.html')
 
 def logout_view(request):
     logout(request)
     return redirect('login-gateway')
-    if request.method == "POST":
-        try:
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            age = int(request.POST.get('age'))
-            monthly_income = int(request.POST.get('monthly_income'))
-            phone_number = request.POST.get('phone_number')
 
-            approved_limit = round(36 * monthly_income, -5)
-
-            new_customer = Customer.objects.create(
-                first_name=first_name,
-                last_name=last_name,
-                age=age,
-                monthly_salary=monthly_income,
-                approved_limit=approved_limit,
-                phone_number=phone_number
-            )
-
-            return render(request, 'register.html', {
-                "success": True,
-                "limit": f"{approved_limit:,}",
-                "name": first_name
-            })
-        except Exception as e:
-            return render(request, 'register.html', {"error": str(e)})
-
-    return render(request, 'register.html')
-
-# ----------------- API VIEWS -----------------
+# ----------------- API VIEWS (DRF) -----------------
 
 class CustomerListView(generics.ListAPIView):
     queryset = Customer.objects.all()
@@ -113,6 +128,7 @@ class CheckEligibilityView(APIView):
             approval = False
             corrected_interest_rate = interest_rate
 
+            # Eligibility Slabs
             if credit_score > 50:
                 approval = True
             elif 50 >= credit_score > 30:
@@ -126,6 +142,7 @@ class CheckEligibilityView(APIView):
 
             new_emi = calculate_emi(loan_amount, corrected_interest_rate, tenure)
 
+            # Max EMI check (50% of salary)
             if (sum_of_current_emis + new_emi) > (0.5 * customer.monthly_salary):
                 approval = False
 
@@ -150,9 +167,8 @@ class CreateLoanView(APIView):
         try:
             customer_id = data.get('customer_id')
             loan_amount = float(data.get('loan_amount'))
-            interest_rate = float(data.get('interest_rate'))
-            tenure = int(data.get('tenure'))
-
+            
+            # Re-verify eligibility internally
             eligibility_response = CheckEligibilityView().post(request)
             eligibility_data = eligibility_response.data
 
@@ -165,11 +181,11 @@ class CreateLoanView(APIView):
                     customer=customer,
                     loan_amount=loan_amount,
                     interest_rate=final_rate,
-                    tenure=tenure,
+                    tenure=data.get('tenure'),
                     monthly_repayment=final_emi,
                     emis_paid_on_time=0,
                     start_date=date.today(),
-                    end_date=date.today() + timedelta(days=tenure * 30)
+                    end_date=date.today() + timedelta(days=int(data.get('tenure')) * 30)
                 )
                 
                 return Response({
@@ -186,8 +202,8 @@ class CreateLoanView(APIView):
                     'message': "Loan not approved based on eligibility criteria."
                 }, status=status.HTTP_200_OK)
 
-        except Customer.DoesNotExist:
-            return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class ViewLoanDetailView(generics.RetrieveAPIView):
     queryset = Loan.objects.all()
