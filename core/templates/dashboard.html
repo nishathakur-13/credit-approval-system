@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>FinanceGuard | System Overview</title>
+</head>
+<body class="bg-[#0f172a] text-white font-['Inter'] min-h-screen">
+    <nav class="flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-[#0f172a] sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">FinanceGuard</h1>
+        </div>
+        <div class="flex items-center space-x-6">
+            <span class="text-slate-400 text-sm">Welcome, <span class="text-blue-400 font-semibold">{{ user.username }}</span></span>
+            <a href="/logout" class="bg-slate-800 hover:bg-slate-700 px-5 py-2 rounded-lg text-sm font-bold transition">Logout</a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-10 pt-16">
+        <div class="mb-16">
+            <h2 class="text-6xl font-extrabold mb-4">System <span class="text-blue-500">Overview</span></h2>
+            <p class="text-slate-400 text-lg">Real-time credit approval metrics and portfolio management.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-800 border-l-4 border-l-blue-500">
+                <p class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Customers</p>
+                <h3 class="text-3xl font-bold">2</h3>
+                <p class="text-blue-400 text-[10px] mt-2">Onboarded accounts</p>
+            </div>
+            <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-800 border-l-4 border-l-purple-500">
+                <p class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Pending Apps</p>
+                <h3 class="text-3xl font-bold">0</h3>
+                <p class="text-purple-400 text-[10px] mt-2">Awaiting review</p>
+            </div>
+            <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-800 border-l-4 border-l-emerald-500">
+                <p class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">System Health</p>
+                <h3 class="text-3xl font-bold">100%</h3>
+                <p class="text-emerald-400 text-[10px] mt-2">Service operational</p>
+            </div>
+            <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-800 border-l-4 border-l-amber-500">
+                <p class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Risk Exposure</p>
+                <h3 class="text-3xl font-bold">Low</h3>
+                <p class="text-amber-400 text-[10px] mt-2">Based on latest scores</p>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-10 flex justify-between items-center shadow-2xl shadow-blue-500/20">
+            <div>
+                <h4 class="text-3xl font-bold mb-2">Quick Actions</h4>
+                <p class="text-blue-100 opacity-80">Rapid assessment and portfolio access.</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/register-ui" class="bg-white text-blue-700 px-8 py-3 rounded-xl font-bold hover:scale-105 transition transform">Assess Loan Eligibility</a>
+                <a href="/admin" class="bg-blue-800/40 text-white border border-blue-400/30 px-8 py-3 rounded-xl font-bold hover:bg-blue-800/60 transition">View Portfolio</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
