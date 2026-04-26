@@ -2,58 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Approval System | Portal</title>
-    <style>
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: linear-gradient(135deg, #1a2a6c, #243b55); 
-            height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; 
-        }
-        .login-card { 
-            background: white; padding: 40px; border-radius: 15px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; 
-        }
-        h1 { font-size: 26px; color: #1a2a6c; margin-bottom: 5px; text-transform: uppercase; font-weight: 800; }
-        .subtitle { color: #666; font-size: 14px; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background-color: #f9f9f9; }
-        
-        .btn-container { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; border: none; transition: 0.3s; }
-        .btn-login { background: #1a2a6c; color: white; }
-        .btn-signup { background: #f4f7f6; color: #1a2a6c; border: 1px solid #1a2a6c; text-decoration: none; display: flex; align-items: center; justify-content: center; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .links-container { margin-top: 25px; font-size: 13px; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 15px; }
-        .links-container a { color: #b21f1f; text-decoration: none; font-weight: 500; }
-        .error-msg { color: #b21f1f; font-size: 13px; margin-bottom: 10px; font-weight: bold; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>FinanceGuard | Secure Portal</title>
 </head>
-<body>
-    <div class="login-card">
-        <h1>Credit Approval System</h1>
-        <div class="subtitle">Unified Secure Access Portal</div>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="error-msg">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="POST">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Username / Admin ID" required>
-            <input type="password" name="password" placeholder="Password" required>
-            
-            <div class="btn-container">
-                <button type="submit" class="btn btn-login">LOGIN</button>
-                <a href="/signup/" class="btn btn-signup">SIGN UP</a>
+<body class="bg-[#0f172a] text-white font-sans flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md p-8 space-y-6 bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700">
+        <div class="text-center">
+            <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/50">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
+            <h2 class="text-3xl font-extrabold tracking-tight">FinanceGuard</h2>
+            <p class="text-slate-400 text-sm mt-2">Unified Credit Management System</p>
+        </div>
+        <form class="space-y-4" method="POST">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Username" class="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            <input type="password" name="password" placeholder="Password" class="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-lg shadow-lg transition-transform active:scale-95">LOGIN</button>
         </form>
-
-        <div class="links-container">
-            <a href="#">Forgot Username?</a>
-            <a href="#">Forgot Password?</a>
+        <div class="text-center pt-4 border-t border-slate-700">
+            <a href="/signup" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Create a fresh account →</a>
         </div>
     </div>
 </body>

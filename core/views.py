@@ -1,100 +1,41 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from .models import Customer, Loan
-from .serializers import CustomerSerializer, LoanSerializer
-import math
-from datetime import date, timedelta
-
-# ----------------- HELPER FUNCTIONS -----------------
-
-def calculate_emi(principal, annual_rate, tenure):
-    """Calculates EMI using the Reducing Balance (Compound Interest) formula."""
-    if annual_rate == 0:
-        return round(principal / tenure, 2)
-    
-    r = (annual_rate / 12) / 100
-    numerator = principal * r * math.pow(1 + r, tenure)
-    denominator = math.pow(1 + r, tenure) - 1
-    emi = numerator / denominator
-    return round(emi, 2)
-
-def calculate_credit_score(customer_id):
-    """A simple credit score calculation based on loan history."""
-    try:
-        customer = Customer.objects.get(id=customer_id)
-    except Customer.DoesNotExist:
-        return 0
-
-    past_loans = Loan.objects.filter(customer=customer)
-    emis_paid_on_time_count = sum(loan.emis_paid_on_time for loan in past_loans)
-    num_loans_taken = past_loans.count()
-    current_debt = sum(loan.loan_amount for loan in past_loans if loan.end_date > date.today())
-    
-    score = 50
-    if current_debt > customer.approved_limit:
-        score = 0
-    if num_loans_taken > 5:
-        score += 10
-    if emis_paid_on_time_count > 50:
-        score += 15
-
-    return min(score, 100)
-
-# ----------------- AUTHENTICATION VIEWS -----------------
 
 def unified_login(request):
-    """Handles the Sign In portal with role-based routing."""
-    if request.method == "POST":
-        u_name = request.POST.get('username')
-        p_word = request.POST.get('password')
-        user = authenticate(request, username=u_name, password=p_word)
-        
-        if user is not None:
+    if request.method == 'POST':
+        # Logic to handle both Admin and Customer login
+        u, p = request.POST.get('username'), request.POST.get('password')
+        user = authenticate(username=u, password=p)
+        if user:
             login(request, user)
-            if user.is_staff:
-                return redirect('/admin/')
-            else:
-                return redirect('/register-ui/')
-        else:
-            messages.error(request, "Invalid username or password.")
-            
+            return redirect('admin:index') if user.is_staff else redirect('dashboard')
+        messages.error(request, "Invalid credentials")
     return render(request, 'login.html')
 
 def signup_view(request):
-    """Handles new Customer account creation."""
-    if request.method == "POST":
-        u_name = request.POST.get('username')
-        email = request.POST.get('email')
-        p_word = request.POST.get('password')
+    if request.method == 'POST':
+        # Automatically calculates approved limit: 36 * salary
+        salary = float(request.POST.get('salary', 0))
+        limit = round(36 * salary, -5) # Nearest Lakh
         
-        if User.objects.filter(username=u_name).exists():
-            messages.error(request, "Username already exists.")
-            return render(request, 'signup.html')
-        
-        # Create standard user (not staff)
-        User.objects.create_user(username=u_name, email=email, password=p_word)
-        messages.success(request, "Account created successfully! Please sign in.")
-        return redirect('login-gateway')
-        
+        # Create User and associated Customer profile
+        user = UserCreationForm(request.POST).save()
+        Customer.objects.create(
+            user=user,
+            first_name=request.POST.get('first_name'),
+            monthly_salary=salary,
+            approved_limit=limit
+        )
+        login(request, user)
+        return redirect('dashboard')
     return render(request, 'signup.html')
 
 def logout_view(request):
     logout(request)
     return redirect('login-gateway')
-
-# ----------------- UI / FRONTEND VIEW -----------------
-
-def register_customer_page(request):
-    """Handles the Frontend UI for Customer Registration."""
-    if not request.user.is_authenticated:
-        return redirect('login-gateway')
-
     if request.method == "POST":
         try:
             first_name = request.POST.get('first_name')
